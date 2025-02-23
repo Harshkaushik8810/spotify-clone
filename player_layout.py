@@ -18,8 +18,8 @@ def make_request(endpoint, params=None):
         return None
 
 # API Functions
-def track_recommendation():
-    return make_request("track/recommendation", {'size': '10', 'seeds': '23'})
+def track_recommendation(query):
+    return make_request("track/recommendation", {'size': str(random.randint(5,10)), 'seeds': query})
 
 def track_details(track_id):
     return make_request(f"track/{track_id}")
@@ -221,8 +221,6 @@ def play_song(spotify_url):
         # Embed the Spotify player
         st.components.v1.iframe(embed_url, height=80)
 
-def get_spotify_embed_url(track_id):
-    return f"https://open.spotify.com/embed/track/{track_id}"  
 
 if __name__ == "__main__":
 
@@ -255,9 +253,12 @@ if __name__ == "__main__":
         else:
             st.sidebar.write("No artist found")
 
+
+    
+
     #----------------------------- Search for an artist -----------------------------#
 
-    #----------------------------- Artist details -----------------------------#
+    #----------------------------- Artist songs -----------------------------#
 
     query_params = st.query_params
     selected_artist = query_params.get("artist_id")
@@ -271,7 +272,7 @@ if __name__ == "__main__":
         for i in selected_artist:
             tracks[i.get('trackTitle')]=i.get('href')
         
-        col1, col2 = st.columns([1, 3])
+        col1, col2, col3 = st.columns([1, 4,2])
 
         with col1:
             st.subheader("Top Tracks")
@@ -287,12 +288,37 @@ if __name__ == "__main__":
             else:
                 st.write("Select a track to play")
 
+        with col3:
+            st.subheader("Recommended Tracks")
+            if "current_track" in st.session_state:
+                selected_song=st.session_state["current_track"]
+                recommended_tracks = track_recommendation(selected_song.split('track/')[1])
+                tracks = {}
+                for i in recommended_tracks:
+                    tracks[i.get('trackTitle')]=i.get('href')
+
+                if len(tracks) > 0: 
+                    try:
+                        for track, track_id in tracks.items():
+                            
+                            if st.button(track, key=track_id):
+                                st.session_state["current_track_2"] = track_id
+                    except:
+                        st.write("No recommended tracks found")
+                if "current_track_2" in st.session_state:
+                    with col2:
+                        st.subheader("Now Playing from recommended tracks")
+                        if "current_track_2" in st.session_state:
+                            play_song(st.session_state["current_track_2"])
+                        else:
+                            st.write("Select a track to play")
+
     else:
         if "tracks" not in st.session_state:
             st.session_state["tracks"] = {i.get('trackTitle'): i.get('href') for i in artist_tracks_exception()}  # ✅ Store in session state
 
 
-        col1, col2 = st.columns([1, 3])
+        col1, col2,col3 = st.columns([1, 4, 2])
 
         with col1:
             st.subheader("Top Tracks")
@@ -307,7 +333,32 @@ if __name__ == "__main__":
             else:
                 st.write("Select a track to play")
 
-    #----------------------------- Artist details -----------------------------#
+        with col3:
+            st.subheader("Recommended Tracks")
+            if "current_track" in st.session_state:
+                selected_song=st.session_state["current_track"]
+                recommended_tracks = track_recommendation(selected_song.split('track/')[1])
+                tracks = {}
+                for i in recommended_tracks:
+                    tracks[i.get('trackTitle')]=i.get('href')
+
+                if len(tracks) > 0: 
+                    try:
+                        for track, track_id in tracks.items():
+                            if st.button(track, key=track_id):
+                                st.session_state["current_track_2"] = track_id
+                    except:
+                        st.write("No recommended tracks found")
+                if "current_track_2" in st.session_state:
+                    with col2:
+                        st.subheader("Now Playing from recommended tracks")
+                        if "current_track_2" in st.session_state:
+                            play_song(st.session_state["current_track_2"])
+                        else:
+                            st.write("Select a track to play")
+                
+
+    #----------------------------- Artist songs -----------------------------#
 
     #-----------------------------Most streamed artists -----------------------------#
 
@@ -331,5 +382,8 @@ if __name__ == "__main__":
 
 
 
-
 # streamlit run player_layout.py
+# git add .
+# git commit -m "Updated the app with new features"
+# git push origin main
+#https://spotifyclone008.streamlit.app/
